@@ -79,6 +79,7 @@ defmodule Videoroom.Room do
     {:ok,
      %{
        rtc_engine: pid,
+       room_id: room_id,
        peer_channels: %{},
        network_options: network_options,
        trace_ctx: trace_ctx
@@ -89,6 +90,11 @@ defmodule Videoroom.Room do
   def handle_info({:add_peer_channel, peer_channel_pid, peer_id}, state) do
     state = put_in(state, [:peer_channels, peer_id], peer_channel_pid)
     Process.monitor(peer_channel_pid)
+    peer_length = map_size(state.peer_channels)
+    notify_channel_pid = :global.whereis_name("notify_" <> state.room_id)
+    if notify_channel_pid != :undefined do
+      send(notify_channel_pid, {:room_active, peer_length})
+    end
     {:noreply, state}
   end
 
@@ -175,6 +181,11 @@ defmodule Videoroom.Room do
 
       Engine.remove_peer(state.rtc_engine, peer_id)
       {_elem, state} = pop_in(state, [:peer_channels, peer_id])
+      peer_length = map_size(state.peer_channels)
+      notify_channel_pid = :global.whereis_name("notify_" <> state.room_id)
+      if notify_channel_pid != :undefined do
+        send(notify_channel_pid, {:room_active, peer_length})
+      end
       {:noreply, state}
     end
   end
