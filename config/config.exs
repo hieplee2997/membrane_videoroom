@@ -22,8 +22,8 @@ config :logger,
     [module: Membrane.SRTP.Encryptor, function: "handle_event/4", level_lower_than: :error]
   ]
 
-config :logger, :console, metadata: [:room, :peer]
+config :membrane_telemetry_metrics, enabled: true
 
-config :ex_libnice, impl: NIF
+config :logger, :console, metadata: [:room, :peer]
 
 import_config("#{config_env()}.exs")
